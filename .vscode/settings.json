@@ -1,0 +1,12 @@
+{
+    "python.analysis.typeCheckingMode": "off",
+    "python.languageServer": "Pylance",
+    "python.linting.enabled": true,
+    "python.linting.pylintEnabled": true,
+    "python.formatting.provider": "black",
+    "editor.formatOnSave": true,
+    "files.associations": {
+        "*.py": "python"
+    },
+    "terminal.integrated.shell.linux": "/bin/bash"
+}

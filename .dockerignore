@@ -1,0 +1,155 @@
+# Git files
+.git
+.gitignore
+.gitattributes
+
+# Docker files
+Dockerfile
+Dockerfile.dev
+docker-compose.yml
+.dockerignore
+
+# Python cache and build files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+logs/
+log/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+.hypothesis/
+
+# Documentation
+README.md
+docs/
+*.md
+!requirements*.md
+
+# Screenshots and images
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.bmp
+*.tiff
+*.svg
+screenshots/
+analysis_screenshots/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# Memory and cache
+memory/
+.cache/
+
+# Spec-kit related
+spec-kit/
+
+# Backup files
+*.bak
+*.backup
+
+# Node modules (if any frontend)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment files with secrets
+.env.local
+.env.production
+.env.staging
+.env.development
+
+# SSL certificates
+ssl/
+*.pem
+*.crt
+*.key
+
+# Database files (if any local databases)
+*.db
+*.sqlite
+*.sqlite3
+
+# Large data files that shouldn't be in build context
+data/large_datasets/
+data/raw/
+data/processed/
+
+# Model files (if any ML models)
+models/
+*.model
+*.pkl
+*.joblib
+
+# Jupyter notebooks
+*.ipynb
+.ipynb_checkpoints/
+
+# Configuration files with secrets
+config.py
+local_settings.py
+
+# Docker volumes and persistent data
+docker_volumes/
+persistent_data/

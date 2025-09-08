@@ -1,0 +1,40 @@
+# Enhanced Hail Hero Dependencies
+requests>=2.31.0
+flask>=2.3.0
+python-dateutil>=2.8.2
+
+# For enhanced logging and monitoring
+structlog>=23.1.0
+
+# For data validation
+pydantic>=2.0.0
+
+# For async operations
+aiohttp>=3.8.0
+
+# For scheduled tasks
+schedule>=1.2.0
+
+# For geospatial calculations
+geopy>=2.3.0
+shapely>=2.0.0
+
+# For database operations
+sqlite3
+
+# For testing
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.1.0
+
+# For development
+black>=23.0.0
+flake8>=6.0.0
+mypy>=1.5.0
+
+# For data processing
+pandas>=2.0.0
+numpy>=1.24.0
+
+# For advanced HTTP handling
+urllib3>=2.0.0
