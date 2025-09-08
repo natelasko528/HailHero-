@@ -1,0 +1,72 @@
+# Development Dockerfile for HailHero MVP Flask Application
+FROM python:3.11-slim
+
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    FLASK_ENV=development \
+    PYTHONPATH=/app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    gdal-bin \
+    libgdal-dev \
+    libproj-dev \
+    libgeos-dev \
+    libspatialindex-dev \
+    curl \
+    git \
+    vim \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+COPY requirements.txt requirements_enhanced.txt ./
+RUN pip install --upgrade pip && \
+    pip install -r requirements.txt && \
+    pip install -r requirements_enhanced.txt
+
+# Create non-root user
+RUN groupadd -r appuser && useradd -r -g appuser appuser
+
+# Create application directories
+RUN mkdir -p /app/src/mvp /app/data /app/logs /app/uploads && \
+    chown -R appuser:appuser /app
+
+# Set working directory
+WORKDIR /app
+
+# Copy application code
+COPY --chown=appuser:appuser src/ ./src/
+COPY --chown=appuser:appuser specs/ ./specs/
+
+# Create necessary directories and files
+RUN mkdir -p /app/specs/001-hail-hero-hail/data && \
+    touch /app/specs/001-hail-hero-hail/data/leads.jsonl && \
+    chown -R appuser:appuser /app/specs/001-hail-hero-hail/data
+
+# Switch to non-root user
+USER appuser
+
+# Expose port
+EXPOSE 5000
+
+# Development startup script with hot reload
+RUN echo '#!/bin/bash\n\
+set -e\n\
+\n\
+echo "Starting HailHero MVP in development mode..."\n\
+\n\
+# Initialize data directory if empty\n\
+if [ ! -s "/app/specs/001-hail-hero-hail/data/leads.jsonl" ]; then\n\
+    echo "Initializing empty leads database..."\n\
+    touch /app/specs/001-hail-hero-hail/data/leads.jsonl\n\
+fi\n\
+\n\
+# Start the application with auto-reload\n\
+exec python -m flask run --host=0.0.0.0 --port=5000 --debug' > /app/start-dev.sh && \
+chmod +x /app/start-dev.sh
+
+# Start the application
+CMD ["/app/start-dev.sh"]

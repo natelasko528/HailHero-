@@ -1,0 +1,17 @@
+mcpServers:
+  filesystem:
+    type: stdio
+    command: npx
+    args:
+      - -y
+      - '@modelcontextprotocol/server-filesystem'
+      - .
+llm:
+  provider: openai
+  model: gpt-4o-mini
+  apiKey: $OPENAI_API_KEY
+  maxIterations: 50
+systemPrompt:
+  enabled: true
+  content: |
+    You are an AI programming assistant focused on coding and reasoning tasks.

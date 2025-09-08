@@ -1,0 +1,185 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.9, 3.10, 3.11, 3.12]
+        
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+        
+    - name: Cache pip packages
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+          
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gdal-bin libgdal-dev
+        
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements_enhanced.txt
+        
+    - name: Install development dependencies
+      run: |
+        pip install pytest pytest-cov pytest-asyncio pytest-mock
+        pip install black flake8 mypy bandit safety
+        
+    - name: Lint with flake8
+      run: |
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        
+    - name: Check code formatting with black
+      run: |
+        black --check --diff .
+        
+    - name: Type checking with mypy
+      run: |
+        mypy src/ --ignore-missing-imports --no-strict-optional
+        
+    - name: Security check with bandit
+      run: |
+        bandit -r src/ -f json -o bandit-report.json || true
+        
+    - name: Check for security vulnerabilities
+      run: |
+        safety check --json --output safety-report.json || true
+        
+    - name: Run tests with pytest
+      run: |
+        pytest test_scoring.py src/mvp/ src/ -v --cov=src/ --cov-report=xml --cov-report=html --cov-fail-under=70
+        
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+        
+    - name: Upload test artifacts
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: test-results-${{ matrix.python-version }}
+        path: |
+          htmlcov/
+          bandit-report.json
+          safety-report.json
+          coverage.xml
+
+  integration-test:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements_enhanced.txt
+        pip install pytest pytest-asyncio
+        
+    - name: Run MVP app tests
+      run: |
+        python -m pytest specs/001-hail-hero-hail/prototypes/test_mvp_app.py -v
+        
+    - name: Test NOAA integration
+      run: |
+        python -c "from src.noaa_integration.noaa_storm_events_integration import NOAAStormEventsIntegration; print('NOAA integration imports successful')"
+        
+    - name: Test configuration loading
+      run: |
+        python -c "from src.config import get_config; config = get_config(); print('Configuration loaded successfully')"
+
+  security-scan:
+    name: Security Scanning
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+        
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+  build-check:
+    name: Build Verification
+    runs-on: ubuntu-latest
+    needs: [test, integration-test]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+      
+    - name: Build Docker image
+      run: |
+        docker build -t hail-hero:ci-test -f Dockerfile .
+        
+    - name: Test Docker container
+      run: |
+        docker run --rm hail-hero:ci-test python -c "from src.config import get_config; print('Docker container test successful')"
+
+  notify:
+    name: Notify Results
+    runs-on: ubuntu-latest
+    needs: [test, integration-test, security-scan, build-check]
+    if: always() && (github.event_name == 'push' || github.event_name == 'pull_request')
+    
+    steps:
+    - name: Send notification
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        channel: '#ci-cd'
+        webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
