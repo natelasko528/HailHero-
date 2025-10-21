@@ -43,3 +43,17 @@ cryptography>=41.0.0
 schedule>=1.2.0
 celery>=5.3.0
 redis>=4.6.0
+
+# Database migrations
+alembic>=1.12.0
+psycopg2-binary>=2.9.0
+
+# API Documentation
+flask-restx>=1.2.0
+flask-cors>=4.0.0
+
+# Monitoring
+flower>=2.0.0
+
+# Database abstraction
+sqlalchemy>=2.0.0
